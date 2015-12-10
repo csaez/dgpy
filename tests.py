@@ -1,5 +1,6 @@
 import dgpy
 import unittest
+import logging
 
 
 class UsageCase(unittest.TestCase):
@@ -35,4 +36,7 @@ class UsageCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger("dgpy")
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
     unittest.main(verbosity=2)

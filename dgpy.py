@@ -1,4 +1,7 @@
+import logging
 from collections import OrderedDict
+
+logger = logging.getLogger(__name__)
 
 
 class Graph(object):
@@ -50,7 +53,7 @@ class VoidNode(object):
         self.outputPorts[name] = port
 
     def evaluate(self):
-        pass
+        logger.debug("Evaluating {}".format(self))
 
 
 class AddNode(VoidNode):
