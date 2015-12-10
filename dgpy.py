@@ -21,6 +21,9 @@ class Port(object):
         self.name = name
         self.value = None
 
+    def connect(self, outputPort):
+        self.value = outputPort.value
+
 
 class VoidNode(object):
     def __init__(self):

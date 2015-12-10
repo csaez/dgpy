@@ -18,6 +18,21 @@ class UsageCase(unittest.TestCase):
         node.evaluate()
         self.assertEqual(node.getOutputPort("result").value, 2+3)
 
+    def testAddNodeConnections(self):
+        graph = dgpy.Graph()
+
+        node1 = graph.addNode(dgpy.AddNode)
+        node1.getInputPort("value1").value = 5
+        node1.getInputPort("value2").value = 10
+        node1.evaluate()
+
+        node2 = graph.addNode(dgpy.AddNode)
+        node2.getInputPort("value1").value = 5
+        node2.getInputPort("value2").connect(node1.getOutputPort("result"))
+        node2.evaluate()
+
+        self.assertEqual(node2.getOutputPort("result").value, 20)
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
