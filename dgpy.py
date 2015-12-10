@@ -7,15 +7,22 @@ logger = logging.getLogger(__name__)
 class Graph(object):
     def __init__(self):
         super(Graph, self).__init__()
-        self.nodes = set()
+        self.nodes = dict()
 
-    def addNode(self, nodeType):
-        node = nodeType()
-        self.nodes.add(node)
+    def addNode(self, name, nodeType, **kwargs):
+        node = nodeType(name)
+        self.nodes[name] = node
+        for k, v in kwargs.iteritems():
+            p = node.getInputPort(k)
+            if p:
+                p.value = v
         return node
 
     def removeNode(self, node):
-        self.nodes.remove(node)
+        del self.nodes[node.name]
+
+    def getNode(self, name):
+        return self.nodes.get(name)
 
 
 class Port(object):
@@ -23,14 +30,22 @@ class Port(object):
         super(Port, self).__init__()
         self.name = name
         self.value = None
+        self.isConnected = False
+        self.dataSource = None
 
     def connect(self, outputPort):
-        self.value = outputPort.value
+        self.isConnected = True
+        self.dataSource = outputPort
+        self.updateValue()
+
+    def updateValue(self):
+        self.value = self.dataSource.value
 
 
 class VoidNode(object):
-    def __init__(self):
+    def __init__(self, name):
         super(VoidNode, self).__init__()
+        self.name = name
         self.inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
@@ -54,12 +69,12 @@ class VoidNode(object):
 
     def evaluate(self):
         logger.debug("Evaluating {}".format(self))
+        for p in self.inputPorts.values():
+            if p.isConnected:
+                p.updateValue()
 
 
 class AddNode(VoidNode):
-    def __init__(self):
-        super(AddNode, self).__init__()
-
     def initPorts(self):
         super(AddNode, self).initPorts()
         self.addInputPort("value1")
