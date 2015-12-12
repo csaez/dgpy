@@ -26,10 +26,14 @@ class Graph(object):
 
 
 class Port(object):
+    value = property(fget=lambda x: x.getValue(),
+                     fset=lambda x, value: x.setValue(value))
+
     def __init__(self, name):
         super(Port, self).__init__()
         self.name = name
-        self.value = None
+        self.owner = None
+        self._value = None
         self.isConnected = False
         self.dataSource = None
 
@@ -40,6 +44,18 @@ class Port(object):
 
     def updateValue(self):
         self.value = self.dataSource.value
+
+    def getValue(self):
+        return self._value
+
+    def setValue(self, value):
+        self._value = value
+
+
+class InputPort(Port):
+    def setValue(self, value):
+        super(InputPort, self).setValue(value)
+        self.owner.evaluate()
 
 
 class VoidNode(object):
@@ -60,11 +76,13 @@ class VoidNode(object):
         return self.outputPorts.get(name)
 
     def addInputPort(self, name):
-        port = Port(name)
+        port = InputPort(name)
+        port.owner = self
         self.inputPorts[name] = port
 
     def addOutputPort(self, name):
         port = Port(name)
+        port.owner = self
         self.outputPorts[name] = port
 
     def evaluate(self):
