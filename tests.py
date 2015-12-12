@@ -11,6 +11,8 @@ class UsageCase(unittest.TestCase):
         graph.removeNode(node)
         self.assertEqual(len(graph.nodes), 0)
 
+
+class PushModelCase(unittest.TestCase):
     def testSingleNodeEvaluation(self):
         graph = dgpy.Graph()
         node = graph.addNode("node1", dgpy.AddNode)
@@ -40,6 +42,31 @@ class UsageCase(unittest.TestCase):
         node2 = graph.getNode("node2")
         self.assertEqual(node2.getOutputPort("result").value, 5 + 13)
 
+        return graph
+
+    def testBranching(self):
+        graph = self.testNodeConnections()
+
+        node1 = graph.getNode("node1")
+
+        node3 = graph.addNode("node3", dgpy.AddNode, value1=8)
+        node3.getInputPort("value2").connect(node1.getOutputPort("result"))
+        self.assertEqual(node3.getOutputPort("result").value, 8 + 5)
+
+        return graph
+
+    def testBranchingPersistence(self):
+        graph = self.testBranching()
+
+        node1 = graph.getNode("node1")
+        node1.getInputPort("value1").value = 1
+        self.assertEqual(node1.getOutputPort("result").value, 1 + 3)
+
+        node3 = graph.getNode("node3")
+        self.assertEqual(node3.getOutputPort("result").value, 8 + 4)
+
+        node2 = graph.getNode("node2")
+        self.assertEqual(node2.getOutputPort("result").value, 5 + 4)
 
 if __name__ == '__main__':
     logger = logging.getLogger("dgpy")

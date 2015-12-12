@@ -35,7 +35,7 @@ class Port(object):
         self.owner = None
         self._value = None
         self.isConnected = False
-        self.dataSource = None
+        self.sources = set()
 
     def getValue(self):
         return self._value
@@ -52,15 +52,16 @@ class InputPort(Port):
     def connect(self, outputPort):
         self.isConnected = True
         outputPort.isConnected = True
-        self.dataSource = outputPort
-        outputPort.dataSource = self
+        self.sources.add(outputPort)
+        outputPort.sources.add(self)
         self.value = outputPort.value
 
 
 class OutputPort(Port):
     def setValue(self, value):
         if self.isConnected:
-            self.dataSource.value = value
+            for port in self.sources:
+                port.value = value
         super(OutputPort, self).setValue(value)
 
 
@@ -92,7 +93,7 @@ class VoidNode(object):
         self.outputPorts[name] = port
 
     def evaluate(self):
-        logger.debug("Evaluating {}".format(self))
+        logger.debug("Evaluating {}".format(self.name))
 
 
 class AddNode(VoidNode):
