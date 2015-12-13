@@ -2,15 +2,18 @@ import logging
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
+PUSH = 0
 
 
 class Graph(object):
     def __init__(self):
         super(Graph, self).__init__()
         self.nodes = dict()
+        self.model = None
 
     def addNode(self, name, nodeType, **kwargs):
         node = nodeType(name)
+        node.model = self.model
         self.nodes[name] = node
         for k, v in kwargs.iteritems():
             p = node.getInputPort(k)
@@ -47,7 +50,8 @@ class Port(object):
 class InputPort(Port):
     def setValue(self, value):
         super(InputPort, self).setValue(value)
-        self.owner.evaluate()
+        if self.owner.model == PUSH:
+            self.owner.evaluate()
 
     def connect(self, outputPort):
         self.isConnected = True
@@ -61,7 +65,8 @@ class OutputPort(Port):
     def setValue(self, value):
         if self.isConnected:
             for port in self.sources:
-                port.value = value
+                if self.owner.model == PUSH:
+                    port.value = value
         super(OutputPort, self).setValue(value)
 
 
@@ -69,6 +74,7 @@ class VoidNode(object):
     def __init__(self, name):
         super(VoidNode, self).__init__()
         self.name = name
+        self.model = None
         self.inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
@@ -105,6 +111,13 @@ class AddNode(VoidNode):
 
     def evaluate(self):
         super(AddNode, self).evaluate()
-        result = sum([p.value for p in self.inputPorts.values()
-                      if p.value is not None])
+        result = 0
+        for p in self.inputPorts.values():
+            msg = "{0}: {1}".format(p.name, p.value)
+            if p.isConnected:
+                msg += " (connected)"
+            logger.debug(msg)
+            if p.value is not None:
+                result += p.value
         self.getOutputPort("result").value = result
+        logger.debug("---")

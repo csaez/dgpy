@@ -15,10 +15,20 @@ class UsageCase(unittest.TestCase):
 class PushModelCase(unittest.TestCase):
     def testSingleNodeEvaluation(self):
         graph = dgpy.Graph()
+        graph.model = dgpy.PUSH
         node = graph.addNode("node1", dgpy.AddNode)
         node.getInputPort("value1").value = 2
         node.getInputPort("value2").value = 3
         self.assertEqual(node.getOutputPort("result").value, 2+3)
+        return graph
+
+    def testModelAbstraction(self):
+        graph = dgpy.Graph()
+        graph.model = None
+        node = graph.addNode("node1", dgpy.AddNode)
+        node.getInputPort("value1").value = 2
+        node.getInputPort("value2").value = 3
+        self.assertIsNone(node.getOutputPort("result").value)
         return graph
 
     def testNodeConnections(self):
