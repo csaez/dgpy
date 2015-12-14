@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 PUSH = 0
+PULL = 1
 
 
 class Graph(object):
@@ -68,6 +69,11 @@ class OutputPort(Port):
                 if self.owner.model == PUSH:
                     port.value = value
         super(OutputPort, self).setValue(value)
+
+    def getValue(self):
+        if self.owner.model == PULL:
+            self.owner.evaluate()
+        return super(OutputPort, self).getValue()
 
 
 class VoidNode(object):
