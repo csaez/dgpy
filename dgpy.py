@@ -53,6 +53,8 @@ class InputPort(Port):
         super(InputPort, self).setValue(value)
         if self.owner.model == PUSH:
             self.owner.evaluate()
+        if self.owner.model == PULL:
+            self.owner.isDirty = True
 
     def connect(self, outputPort):
         self.isConnected = True
@@ -72,7 +74,9 @@ class OutputPort(Port):
 
     def getValue(self):
         if self.owner.model == PULL:
-            self.owner.evaluate()
+            if self.owner.isDirty:
+                self.owner.evaluate()
+                self.owner.isDirty = False
         return super(OutputPort, self).getValue()
 
 
@@ -81,6 +85,8 @@ class VoidNode(object):
         super(VoidNode, self).__init__()
         self.name = name
         self.model = None
+        self.evalCount = 0
+        self.isDirty = True
         self.inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
@@ -106,6 +112,7 @@ class VoidNode(object):
 
     def evaluate(self):
         logger.debug("Evaluating {}".format(self.name))
+        self.evalCount += 1
 
 
 class AddNode(VoidNode):

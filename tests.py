@@ -6,9 +6,9 @@ import logging
 class UsageCase(unittest.TestCase):
     def testAddRemoveNodes(self):
         graph = dgpy.Graph()
-        node = graph.addNode("node", dgpy.VoidNode)
+        node1 = graph.addNode("node1", dgpy.VoidNode)
         self.assertEqual(len(graph.nodes), 1)
-        graph.removeNode(node)
+        graph.removeNode(node1)
         self.assertEqual(len(graph.nodes), 0)
 
 
@@ -21,44 +21,53 @@ class PushModelCase(unittest.TestCase):
         graph = dgpy.Graph()
         graph.model = self.model
 
-        node = graph.addNode("node1", dgpy.AddNode)
-        node.getInputPort("value1").value = 2
-        node.getInputPort("value2").value = 3
-        self.assertEqual(node.getOutputPort("result").value, 2+3)
+        node1 = graph.addNode("node1", dgpy.AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
+        self.assertEqual(node1.getOutputPort("result").value, 2+3)
 
         return graph
 
-    def testModelAbstraction(self):
+    def testModelIsolation(self):
         graph = dgpy.Graph()
         graph.model = None
-        node = graph.addNode("node1", dgpy.AddNode)
-        node.getInputPort("value1").value = 2
-        node.getInputPort("value2").value = 3
-        self.assertIsNone(node.getOutputPort("result").value)
+
+        node1 = graph.addNode("node1", dgpy.AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
+        self.assertIsNone(node1.getOutputPort("result").value)
+
         return graph
 
-    # def testNodeConnections(self):
-        # graph = self.testSingleNodeEvaluation()
+    def testNodeConnections(self):
+        graph = dgpy.Graph()
+        graph.model = self.model
 
-        # node1 = graph.getNode("node1")
+        node1 = graph.addNode("node1", dgpy.AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
 
-        # node2 = graph.addNode("node2", dgpy.AddNode, value1=5)
-        # node2.getInputPort("value2").connect(node1.getOutputPort("result"))
-        # self.assertEqual(node2.getOutputPort("result").value, 5 + 5)
+        node2 = graph.addNode("node2", dgpy.AddNode, value1=5)
+        node2.getInputPort("value2").connect(node1.getOutputPort("result"))
+        self.assertEqual(node2.getOutputPort("result").value, 5 + 5)
 
-        # return graph
+        return graph
 
-    # def testPersistentConnections(self):
-        # graph = self.testNodeConnections()
+    def testPersistentConnections(self):
+        graph = dgpy.Graph()
+        graph.model = self.model
 
-        # node1 = graph.getNode("node1")
-        # node1.getInputPort("value1").value = 10
-        # self.assertEqual(node1.getOutputPort("result").value, 10 + 3)
+        node1 = graph.addNode("node1", dgpy.AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
 
-        # node2 = graph.getNode("node2")
-        # self.assertEqual(node2.getOutputPort("result").value, 5 + 13)
+        node2 = graph.addNode("node2", dgpy.AddNode, value1=5)
+        node2.getInputPort("value2").connect(node1.getOutputPort("result"))
 
-        # return graph
+        node1.getInputPort("value1").value = 10
+        self.assertEqual(node2.getOutputPort("result").value, 5 + 13)
+
+        return graph
 
     # def testBranching(self):
         # graph = self.testNodeConnections()
@@ -89,6 +98,12 @@ class PullModelCase(PushModelCase):
     def __init__(self, *args):
         super(PullModelCase, self).__init__(*args)
         self.model = dgpy.PULL
+
+    def testEvaluationCount(self):
+        graph = self.testSingleNodeEvaluation()
+        node1 = graph.getNode("node1")
+        node1.getOutputPort("result").value
+        self.assertEqual(node1.evalCount, 1)
 
 if __name__ == '__main__':
     logger = logging.getLogger("dgpy")
