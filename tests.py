@@ -63,6 +63,7 @@ class PushModelCase(unittest.TestCase):
 
         node2 = graph.addNode("node2", dgpy.AddNode, value1=5)
         node2.getInputPort("value2").connect(node1.getOutputPort("result"))
+        self.assertEqual(node2.getOutputPort("result").value, 5 + 5)
 
         node1.getInputPort("value1").value = 10
         self.assertEqual(node2.getOutputPort("result").value, 5 + 13)

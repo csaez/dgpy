@@ -75,21 +75,37 @@ class OutputPort(Port):
     def getValue(self):
         if self.owner.model == PULL:
             if self.owner.isDirty:
+                for port in self.owner.inputPorts.values():
+                    if port.isConnected:
+                        for src in port.sources:
+                            port.value = src.value
                 self.owner.evaluate()
                 self.owner.isDirty = False
         return super(OutputPort, self).getValue()
 
 
 class VoidNode(object):
+    isDirty = property(fget=lambda x: x._isDirty,
+                       fset=lambda x, value: x.setDirty(value))
+
     def __init__(self, name):
         super(VoidNode, self).__init__()
         self.name = name
         self.model = None
         self.evalCount = 0
-        self.isDirty = True
+        self._isDirty = True
         self.inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
+
+    def setDirty(self, value):
+        self._isDirty = value
+        if not value:
+            return
+        for port in self.outputPorts.values():
+            if port.isConnected:
+                for src in port.sources:
+                    src.owner.isDirty = True
 
     def initPorts(self):
         pass
