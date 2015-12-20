@@ -2,6 +2,9 @@ import dgpy
 import unittest
 import logging
 
+logger = logging.getLogger("dgpy")
+logger.addHandler(logging.StreamHandler())
+
 
 class UsageCase(unittest.TestCase):
     def testAddRemoveNodes(self):
@@ -16,6 +19,13 @@ class PushModelCase(unittest.TestCase):
     def __init__(self, *args):
         super(PushModelCase, self).__init__(*args)
         self.model = dgpy.PUSH
+
+    def setUp(self):
+        self.loggerLevel = logger.level
+        logger.setLevel(logging.NOTSET)
+
+    def tearDown(self):
+        logger.setLevel(self.loggerLevel)
 
     def testSingleNodeEvaluation(self):
         graph = dgpy.Graph()
@@ -70,29 +80,29 @@ class PushModelCase(unittest.TestCase):
 
         return graph
 
-    # def testBranching(self):
-        # graph = self.testNodeConnections()
+    def testBranching(self):
+        graph = self.testNodeConnections()
 
-        # node1 = graph.getNode("node1")
+        node1 = graph.getNode("node1")
 
-        # node3 = graph.addNode("node3", dgpy.AddNode, value1=8)
-        # node3.getInputPort("value2").connect(node1.getOutputPort("result"))
-        # self.assertEqual(node3.getOutputPort("result").value, 8 + 5)
+        node3 = graph.addNode("node3", dgpy.AddNode, value1=8)
+        node3.getInputPort("value2").connect(node1.getOutputPort("result"))
+        self.assertEqual(node3.getOutputPort("result").value, 8 + 5)
 
-        # return graph
+        return graph
 
-    # def testBranchingPersistence(self):
-        # graph = self.testBranching()
+    def testBranchingPersistence(self):
+        graph = self.testBranching()
 
-        # node1 = graph.getNode("node1")
-        # node1.getInputPort("value1").value = 1
-        # self.assertEqual(node1.getOutputPort("result").value, 1 + 3)
+        node1 = graph.getNode("node1")
+        node1.getInputPort("value1").value = 1
+        self.assertEqual(node1.getOutputPort("result").value, 1 + 3)
 
-        # node3 = graph.getNode("node3")
-        # self.assertEqual(node3.getOutputPort("result").value, 8 + 4)
+        node3 = graph.getNode("node3")
+        self.assertEqual(node3.getOutputPort("result").value, 8 + 4)
 
-        # node2 = graph.getNode("node2")
-        # self.assertEqual(node2.getOutputPort("result").value, 5 + 4)
+        node2 = graph.getNode("node2")
+        self.assertEqual(node2.getOutputPort("result").value, 5 + 4)
 
 
 class PullModelCase(PushModelCase):
@@ -107,7 +117,5 @@ class PullModelCase(PushModelCase):
         self.assertEqual(node1.evalCount, 1)
 
 if __name__ == '__main__':
-    logger = logging.getLogger("dgpy")
-    logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.DEBUG)
     unittest.main(verbosity=2)
