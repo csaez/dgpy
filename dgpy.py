@@ -38,7 +38,6 @@ class Port(object):
         self.name = name
         self.owner = None
         self._value = None
-        self.isConnected = False
         self.sources = set()
 
     def getValue(self):
@@ -46,6 +45,10 @@ class Port(object):
 
     def setValue(self, value):
         self._value = value
+
+    @property
+    def isConnected(self):
+        return len(self.sources) > 0
 
 
 class InputPort(Port):
@@ -57,16 +60,13 @@ class InputPort(Port):
             self.owner.isDirty = True
 
     def connect(self, outputPort):
-        self.isConnected = True
-        outputPort.isConnected = True
         self.sources.add(outputPort)
         outputPort.sources.add(self)
         self.value = outputPort.value
 
     def disconnect(self):
-        self.isConnected = False
-        port = self.sources.pop(0)
-        port.sources.remove(port)
+        port = self.sources.pop()
+        port.sources.remove(self)
 
 
 class OutputPort(Port):

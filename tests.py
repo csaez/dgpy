@@ -14,6 +14,24 @@ class UsageCase(unittest.TestCase):
         graph.removeNode(node1)
         self.assertEqual(len(graph.nodes), 0)
 
+    def testDisconnect(self):
+        graph = dgpy.Graph()
+
+        node1 = graph.addNode("node1", dgpy.AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
+
+        node2 = graph.addNode("node2", dgpy.AddNode, value1=5)
+        node2.getInputPort("value2").connect(node1.getOutputPort("result"))
+
+        self.assertTrue(node1.getOutputPort("result").isConnected)
+        self.assertTrue(node2.getInputPort("value2").isConnected)
+
+        node2.getInputPort("value2").disconnect()
+
+        self.assertFalse(node1.getOutputPort("result").isConnected)
+        self.assertFalse(node2.getInputPort("value2").isConnected)
+
 
 class PushModelCase(unittest.TestCase):
     def __init__(self, *args):
