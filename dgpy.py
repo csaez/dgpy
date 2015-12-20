@@ -63,6 +63,11 @@ class InputPort(Port):
         outputPort.sources.add(self)
         self.value = outputPort.value
 
+    def disconnect(self):
+        self.isConnected = False
+        port = self.sources.pop(0)
+        port.sources.remove(port)
+
 
 class OutputPort(Port):
     def setValue(self, value):
