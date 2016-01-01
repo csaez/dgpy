@@ -28,6 +28,24 @@ class Graph(object):
     def getNode(self, name):
         return self.nodes.get(name)
 
+    def serialize(self):
+        data = {
+            "dataType": "dgpy",
+            "version": "1.0.0",
+            "model": self.model,
+            "nodes": dict(),
+        }
+        return data
+
+    @classmethod
+    def fromData(cls, data):
+        if data.get("dataType") != "dgpy":  # validation
+            return
+
+        graph = cls()
+        graph.model = data.get("model")
+        return graph
+
 
 class Port(object):
     value = property(fget=lambda x: x.getValue(),

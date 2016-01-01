@@ -134,6 +134,18 @@ class PullModelCase(PushModelCase):
         node1.getOutputPort("result").value
         self.assertEqual(node1.evalCount, 1)
 
+
+class SerializationCase(unittest.TestCase):
+    def testEmptyGraph(self):
+        graph1 = dgpy.Graph()
+        graph1.model = dgpy.PULL
+        data = graph1.serialize()
+        print data
+
+        graph2 = dgpy.Graph.fromData(data)
+        self.assertEqual(graph1.model, graph2.model)
+        self.assertEqual(len(graph1.nodes), len(graph2.nodes))
+
 if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     unittest.main(verbosity=2)
