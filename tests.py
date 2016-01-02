@@ -140,11 +140,24 @@ class SerializationCase(unittest.TestCase):
         graph1 = dgpy.Graph()
         graph1.model = dgpy.PULL
         data = graph1.serialize()
-        print data
 
         graph2 = dgpy.Graph.fromData(data)
         self.assertEqual(graph1.model, graph2.model)
         self.assertEqual(len(graph1.nodes), len(graph2.nodes))
+
+    def testOrphanNodes(self):
+        graph1 = dgpy.Graph()
+        graph1.model = dgpy.PULL
+        graph1.addNode("testingVoidNode", dgpy.VoidNode)
+        graph1.addNode("testingAddNode", dgpy.AddNode)
+        data = graph1.serialize()
+
+        graph2 = dgpy.Graph.fromData(data)
+        self.assertEqual(len(graph1.nodes), len(graph2.nodes))
+        for node1 in graph1.nodes:
+            node2 = graph2.getNode(node1.name)
+            self.assertIsNotNone(node2)
+            self.assertEqual(node1.model, node2.model)
 
 if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)

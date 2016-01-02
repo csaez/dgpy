@@ -1,3 +1,4 @@
+import pprint
 import logging
 from collections import OrderedDict
 
@@ -9,13 +10,17 @@ PULL = 1
 class Graph(object):
     def __init__(self):
         super(Graph, self).__init__()
-        self.nodes = dict()
+        self._nodes = dict()
         self.model = None
+
+    @property
+    def nodes(self):
+        return self._nodes.values()
 
     def addNode(self, name, nodeType, **kwargs):
         node = nodeType(name)
         node.model = self.model
-        self.nodes[name] = node
+        self._nodes[name] = node
         for k, v in kwargs.iteritems():
             p = node.getInputPort(k)
             if p:
@@ -23,10 +28,10 @@ class Graph(object):
         return node
 
     def removeNode(self, node):
-        del self.nodes[node.name]
+        del self._nodes[node.name]
 
     def getNode(self, name):
-        return self.nodes.get(name)
+        return self._nodes.get(name)
 
     def serialize(self):
         data = {
@@ -35,6 +40,11 @@ class Graph(object):
             "model": self.model,
             "nodes": dict(),
         }
+        for node in self.nodes:
+            data["nodes"][node.name] = node.serialize()
+
+        logger.debug("Serializing graph...")
+        logger.debug(pprint.pformat(data))
         return data
 
     @classmethod
@@ -44,6 +54,11 @@ class Graph(object):
 
         graph = cls()
         graph.model = data.get("model")
+        for d in data["nodes"].values():
+            cls = globals().get(d["className"])
+            node = graph.addNode(d["name"], cls)
+            node.model = d["model"]
+
         return graph
 
 
@@ -120,6 +135,16 @@ class VoidNode(object):
         self.inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
+
+    def serialize(self):
+        data = {
+            "name": self.name,
+            "model": self.model,
+            "inputPorts": dict(),
+            "outputPorts": dict(),
+            "className": type(self).__name__,
+        }
+        return data
 
     def setDirty(self, value):
         self._isDirty = value
