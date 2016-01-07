@@ -149,7 +149,7 @@ class SerializationCase(unittest.TestCase):
         graph1 = dgpy.Graph()
         graph1.model = dgpy.PULL
         graph1.addNode("testingVoidNode", dgpy.VoidNode)
-        graph1.addNode("testingAddNode", dgpy.AddNode)
+        graph1.addNode("testingAddNode", dgpy.AddNode, value1=2, value2=3)
         data = graph1.serialize()
 
         graph2 = dgpy.Graph.fromData(data)
@@ -158,6 +158,11 @@ class SerializationCase(unittest.TestCase):
             node2 = graph2.getNode(node1.name)
             self.assertIsNotNone(node2)
             self.assertEqual(node1.model, node2.model)
+
+            if isinstance(node2, dgpy.AddNode):
+                self.assertEqual(node2.getInputPort("value1").value, 2)
+                self.assertEqual(node2.getInputPort("value2").value, 3)
+                self.assertEqual(node2.getOutputPort("result").value, 2+3)
 
 if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)

@@ -15,7 +15,7 @@ class Graph(object):
 
     @property
     def nodes(self):
-        return self._nodes.values()
+        return tuple(self._nodes.values())
 
     def addNode(self, name, nodeType, **kwargs):
         node = nodeType(name)
@@ -54,10 +54,13 @@ class Graph(object):
 
         graph = cls()
         graph.model = data.get("model")
-        for d in data["nodes"].values():
-            cls = globals().get(d["className"])
-            node = graph.addNode(d["name"], cls)
-            node.model = d["model"]
+        for nodeName, nodeData in data["nodes"].iteritems():
+            nodeClass = globals().get(nodeData["className"])
+            node = graph.addNode(nodeName, nodeClass)
+            node.model = nodeData["model"]
+
+            for portName, portData in nodeData["inputPorts"].iteritems():
+                node.getInputPort(portName).value = portData["value"]
 
         return graph
 
@@ -72,6 +75,13 @@ class Port(object):
         self.owner = None
         self._value = None
         self.sources = set()
+
+    def serialize(self):
+        data = {
+            "value": self.value,
+            "sources": set(),
+        }
+        return data
 
     def getValue(self):
         return self._value
@@ -113,7 +123,7 @@ class OutputPort(Port):
     def getValue(self):
         if self.owner.model == PULL:
             if self.owner.isDirty:
-                for port in self.owner.inputPorts.values():
+                for port in self.owner._inputPorts.values():
                     if port.isConnected:
                         for src in port.sources:
                             port.value = src.value
@@ -132,18 +142,22 @@ class VoidNode(object):
         self.model = None
         self.evalCount = 0
         self._isDirty = True
-        self.inputPorts = OrderedDict()
+        self._inputPorts = OrderedDict()
         self.outputPorts = OrderedDict()
         self.initPorts()
 
+    @property
+    def inputPorts(self):
+        return tuple(self._inputPorts.values())
+
     def serialize(self):
         data = {
-            "name": self.name,
             "model": self.model,
             "inputPorts": dict(),
-            "outputPorts": dict(),
             "className": type(self).__name__,
         }
+        for port in self.inputPorts:
+            data["inputPorts"][port.name] = port.serialize()
         return data
 
     def setDirty(self, value):
@@ -159,7 +173,7 @@ class VoidNode(object):
         pass
 
     def getInputPort(self, name):
-        return self.inputPorts.get(name)
+        return self._inputPorts.get(name)
 
     def getOutputPort(self, name):
         return self.outputPorts.get(name)
@@ -167,7 +181,7 @@ class VoidNode(object):
     def addInputPort(self, name):
         port = InputPort(name)
         port.owner = self
-        self.inputPorts[name] = port
+        self._inputPorts[name] = port
 
     def addOutputPort(self, name):
         port = OutputPort(name)
@@ -189,7 +203,7 @@ class AddNode(VoidNode):
     def evaluate(self):
         super(AddNode, self).evaluate()
         result = 0
-        for p in self.inputPorts.values():
+        for p in self._inputPorts.values():
             msg = "{0}: {1}".format(p.name, p.value)
             if p.isConnected:
                 msg += " (connected)"
