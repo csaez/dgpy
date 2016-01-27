@@ -1,10 +1,35 @@
+# Copyright (c) 2016 Cesar Saez
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import pprint
 import logging
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
+NODES = dict()
 PUSH = 0
 PULL = 1
+
+
+def registerNode(nodeName, nodeType):
+    NODES[nodeName] = nodeType
 
 
 class Graph(object):
@@ -33,6 +58,17 @@ class Graph(object):
     def getNode(self, name):
         return self._nodes.get(name)
 
+    def get(self, fullname):
+        splitName = fullname.split(".")
+        node = self.getNode(splitName[0])
+        if node and len(splitName) == 2:
+            port = node.getInputPort(splitName[1])
+            if port is None:
+                port = node.getOutputPort(splitName[1])
+            if port:
+                return port
+        return node
+
     def serialize(self):
         data = {
             "dataType": "dgpy",
@@ -55,7 +91,7 @@ class Graph(object):
         graph = cls()
         graph.model = data.get("model")
         for nodeName, nodeData in data["nodes"].iteritems():
-            nodeClass = globals().get(nodeData["className"])
+            nodeClass = NODES.get(nodeData["className"])
             node = graph.addNode(nodeName, nodeClass)
             node.model = nodeData["model"]
 
@@ -92,6 +128,10 @@ class Port(object):
     @property
     def isConnected(self):
         return len(self.sources) > 0
+
+    @property
+    def fullname(self):
+        return ".".join((self.owner.fullname, self.name))
 
 
 class InputPort(Port):
@@ -143,12 +183,20 @@ class VoidNode(object):
         self.evalCount = 0
         self._isDirty = True
         self._inputPorts = OrderedDict()
-        self.outputPorts = OrderedDict()
+        self._outputPorts = OrderedDict()
         self.initPorts()
 
     @property
     def inputPorts(self):
         return tuple(self._inputPorts.values())
+
+    @property
+    def outputPorts(self):
+        return tuple(self._outputPorts.values())
+
+    @property
+    def fullname(self):
+        return self.name
 
     def serialize(self):
         data = {
@@ -164,7 +212,7 @@ class VoidNode(object):
         self._isDirty = value
         if not value:
             return
-        for port in self.outputPorts.values():
+        for port in self._outputPorts.values():
             if port.isConnected:
                 for src in port.sources:
                     src.owner.isDirty = True
@@ -176,7 +224,7 @@ class VoidNode(object):
         return self._inputPorts.get(name)
 
     def getOutputPort(self, name):
-        return self.outputPorts.get(name)
+        return self._outputPorts.get(name)
 
     def addInputPort(self, name):
         port = InputPort(name)
@@ -186,29 +234,10 @@ class VoidNode(object):
     def addOutputPort(self, name):
         port = OutputPort(name)
         port.owner = self
-        self.outputPorts[name] = port
+        self._outputPorts[name] = port
 
     def evaluate(self):
         logger.debug("Evaluating {}".format(self.name))
         self.evalCount += 1
 
-
-class AddNode(VoidNode):
-    def initPorts(self):
-        super(AddNode, self).initPorts()
-        self.addInputPort("value1")
-        self.addInputPort("value2")
-        self.addOutputPort("result")
-
-    def evaluate(self):
-        super(AddNode, self).evaluate()
-        result = 0
-        for p in self._inputPorts.values():
-            msg = "{0}: {1}".format(p.name, p.value)
-            if p.isConnected:
-                msg += " (connected)"
-            logger.debug(msg)
-            if p.value is not None:
-                result += p.value
-        self.getOutputPort("result").value = result
-        logger.debug("---")
+registerNode("VoidNode", VoidNode)
