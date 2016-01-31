@@ -20,7 +20,7 @@
 
 import pprint
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 logger = logging.getLogger(__name__)
 NODES = dict()
@@ -30,6 +30,30 @@ PULL = 1
 
 def registerNode(nodeName, nodeType):
     NODES[nodeName] = nodeType
+
+
+def getRefCounterFromData(data):
+    count = Counter()
+
+    for nodeName, nodeData in data["nodes"].iteritems():
+
+        for portName, portData in nodeData["inputPorts"].iteritems():
+            for sourceName in portData["sources"]:
+                sourceOwner = sourceName.split(".")[0]
+                count[sourceOwner] -= 1
+
+        for portName, portData in nodeData["outputPorts"].iteritems():
+            for sourceName in portData["sources"]:
+                sourceOwner = sourceName.split(".")[0]
+                count[sourceOwner] += 1
+
+    # normalize
+    if len(count.values()):
+        toAdd = abs(min(count.values()))
+        for k in count.keys():
+            count[k] += toAdd
+
+    return count
 
 
 class Graph(object):
@@ -90,13 +114,24 @@ class Graph(object):
 
         graph = cls()
         graph.model = data.get("model")
-        for nodeName, nodeData in data["nodes"].iteritems():
+
+        count = getRefCounterFromData(data)
+        orderedNodes = sorted(data["nodes"].keys(), key=lambda x: count[x])
+
+        for nodeName in orderedNodes:
+            nodeData = data["nodes"][nodeName]
             nodeClass = NODES.get(nodeData["className"])
             node = graph.addNode(nodeName, nodeClass)
             node.model = nodeData["model"]
 
             for portName, portData in nodeData["inputPorts"].iteritems():
-                node.getInputPort(portName).value = portData["value"]
+                port = node.getInputPort(portName)
+
+                for sourceName in portData["sources"]:
+                    port.connect(graph.get(sourceName))
+
+                if not port.isConnected:
+                    port.value = portData["value"]
 
         return graph
 
@@ -115,7 +150,7 @@ class Port(object):
     def serialize(self):
         data = {
             "value": self.value,
-            "sources": set(),
+            "sources": [x.fullname for x in self.sources],
         }
         return data
 
@@ -202,10 +237,13 @@ class VoidNode(object):
         data = {
             "model": self.model,
             "inputPorts": dict(),
+            "outputPorts": dict(),
             "className": type(self).__name__,
         }
         for port in self.inputPorts:
             data["inputPorts"][port.name] = port.serialize()
+        for port in self.outputPorts:
+            data["outputPorts"][port.name] = port.serialize()
         return data
 
     def setDirty(self, value):

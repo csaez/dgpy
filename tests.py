@@ -12,8 +12,13 @@ def debug(f):
     def decorated(*args, **kwds):
         level = logger.level
         logger.setLevel(logging.DEBUG)
-        rval = f(*args, **kwds)
-        logger.setLevel(level)
+
+        rval = None
+        try:
+            rval = f(*args, **kwds)
+        finally:
+            logger.setLevel(level)
+
         return rval
     return decorated
 
@@ -67,7 +72,7 @@ class UsageCase(unittest.TestCase):
         self.assertFalse(node1.getOutputPort("result").isConnected)
         self.assertFalse(node2.getInputPort("value2").isConnected)
 
-    def test_getter(self):
+    def testGetter(self):
         graph = dgpy.Graph()
         graph.addNode("node1", AddNode)
 
@@ -192,6 +197,28 @@ class SerializationCase(unittest.TestCase):
 
         graph2 = dgpy.Graph.fromData(data)
         self.assertDictEqual(data, graph2.serialize())
+
+    def testConnectedNodes(self):
+        graph = dgpy.Graph()
+        graph.model = dgpy.PULL
+
+        node1 = graph.addNode("node1", AddNode)
+        node1.getInputPort("value1").value = 2
+        node1.getInputPort("value2").value = 3
+
+        node2 = graph.addNode("node2", AddNode, value1=5)
+        node2.getInputPort("value2").connect(node1.getOutputPort("result"))
+
+        node3 = graph.addNode("node3", AddNode, value1=8)
+        node3.getInputPort("value2").connect(node2.getOutputPort("result"))
+
+        graph.addNode("testingVoidNode", dgpy.VoidNode)
+
+        data = graph.serialize()
+
+        graph2 = dgpy.Graph.fromData(data)
+        self.assertTrue(graph2.get("node2.value2").isConnected)
+        self.assertTrue(graph2.get("node3.value2").isConnected)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
