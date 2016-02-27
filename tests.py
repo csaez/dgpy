@@ -82,6 +82,12 @@ class UsageCase(unittest.TestCase):
         self.assertIsNotNone(graph.get("node1"))
         self.assertIsNone(graph.get("foo"))
 
+    def testDataValidation(self):
+        self.assertIsNone(dgpy.Graph.fromData(1))
+        self.assertIsNone(dgpy.Graph.fromData("foo"))
+        self.assertIsNone(dgpy.Graph.fromData({"foo": "bar"}))
+        self.assertIsNone(dgpy.Graph.fromData({"dataType": "bar"}))
+
 
 class PushModelCase(unittest.TestCase):
     def __init__(self, *args):

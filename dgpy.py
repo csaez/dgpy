@@ -109,7 +109,8 @@ class Graph(object):
 
     @classmethod
     def fromData(cls, data):
-        if data.get("dataType") != "dgpy":  # validation
+        # validation
+        if not isinstance(data, dict) or data.get("dataType") != "dgpy":
             return
 
         graph = cls()
