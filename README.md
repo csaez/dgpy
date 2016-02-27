@@ -62,7 +62,7 @@ print node2.getOutputPort("result").value  # 5 + 5
 
 node1.getInputPort("value1").value = 10
 
-print node2.getOutputPort("result").value  # 5 + 13
+print node2.getOutputPort("result").value  # 13 + 5
 
 
 # Let's play with the serialization
