@@ -1,3 +1,5 @@
+# dgpy
+
 `dgpy` is a generic dependency graph implemented in python, coded live, 10
 minutes at a time, in a test-driven development fashion.
 
@@ -9,10 +11,10 @@ and read more about the motivations behind this project at
 
 ## Features
 
-In terms of features, `dgpy` implements a null/void node supporting input and
-output ports/plugs as a base for user specialization, a *push and/or pull
-evaluation model* (you can mix it as the model get set per node) and
-*serialization* allowing to save and load graphs (reference counting is done
+In terms of features, `dgpy` implements a **null/void node supporting input and
+output ports/plugs** as a base for user specialization, a **push and/or pull
+evaluation model** (you can mix it as the model get set per node) and
+**serialization** allowing to save and load graphs (reference counting is done
 during import, so the *serialized data is hack-able*).
 
 
@@ -41,14 +43,9 @@ class AddNode(dgpy.VoidNode):
         super(AddNode, self).evaluate()
         result = 0
         for p in self._inputPorts.values():
-            msg = "{0}: {1}".format(p.name, p.value)
-            if p.isConnected:
-                msg += " (connected)"
-            logger.debug(msg)
             if p.value is not None:
                 result += p.value
         self.getOutputPort("result").value = result
-        logger.debug("---")
 
 dgpy.registerNode("AddNode", AddNode)
 
@@ -59,7 +56,6 @@ graph.model = dgpy.PULL
 
 node1 = graph.addNode("node1", AddNode, value1=2, value2=3)
 node2 = graph.addNode("node2", AddNode, value1=5)
-
 node2.getInputPort("value2").connect(node1.getOutputPort("result"))
 
 print node2.getOutputPort("result").value  # 5 + 5
@@ -71,7 +67,6 @@ print node2.getOutputPort("result").value  # 5 + 13
 
 # Let's play with the serialization
 data = graph.serialize()
-
 clone = dgpy.Graph.fromData(data)
 ```
 
@@ -88,7 +83,7 @@ everyone without forcing dependencies.
 Coverage at the time this readme was written is 100%, but you can check it by
 running the test suite.
 
-```bash
+```
 pip install coverage
 
 coverage run --source=dgpy -m unittest discover
