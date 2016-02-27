@@ -6,7 +6,7 @@ minutes at a time, in a test-driven development fashion.
 You can watch the playlist on
 [youtube](https://youtu.be/pXUL_aDhN-Y?list=PLYcUacEjhPL-nSolgfdIJ_GqBakUp790z)
 and read more about the motivations behind this project at
-[cesarsaez.me](http://cesarsaez.me).
+[cesarsaez.me](http://www.cesarsaez.me/2015/12/dgpy.html).
 
 
 ## Features
