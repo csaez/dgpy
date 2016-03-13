@@ -7,8 +7,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -35,14 +35,14 @@ def registerNode(nodeName, nodeType):
 def getRefCounterFromData(data):
     count = Counter()
 
-    for nodeName, nodeData in data["nodes"].iteritems():
+    for nodeName, nodeData in data["nodes"].items():
 
-        for portName, portData in nodeData["inputPorts"].iteritems():
+        for portName, portData in nodeData["inputPorts"].items():
             for sourceName in portData["sources"]:
                 sourceOwner = sourceName.split(".")[0]
                 count[sourceOwner] -= 1
 
-        for portName, portData in nodeData["outputPorts"].iteritems():
+        for portName, portData in nodeData["outputPorts"].items():
             for sourceName in portData["sources"]:
                 sourceOwner = sourceName.split(".")[0]
                 count[sourceOwner] += 1
@@ -70,7 +70,7 @@ class Graph(object):
         node = nodeType(name)
         node.model = self.model
         self._nodes[name] = node
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             p = node.getInputPort(k)
             if p:
                 p.value = v
@@ -125,7 +125,7 @@ class Graph(object):
             node = graph.addNode(nodeName, nodeClass)
             node.model = nodeData["model"]
 
-            for portName, portData in nodeData["inputPorts"].iteritems():
+            for portName, portData in nodeData["inputPorts"].items():
                 port = node.getInputPort(portName)
 
                 for sourceName in portData["sources"]:

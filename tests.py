@@ -1,21 +1,21 @@
-from functools import wraps
-import dgpy
+import functools
 import unittest
 import logging
+import dgpy
 
 logger = logging.getLogger("dgpy")
 logger.addHandler(logging.StreamHandler())
 
 
-def debug(f):
-    @wraps(f)
+def debug(func):
+    @functools.wraps(func)
     def decorated(*args, **kwds):
         level = logger.level
         logger.setLevel(logging.DEBUG)
 
         rval = None
         try:
-            rval = f(*args, **kwds)
+            rval = func(*args, **kwds)
         finally:
             logger.setLevel(level)
 
