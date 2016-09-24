@@ -43,7 +43,7 @@ class AddNode(dgpy.VoidNode):
         self.getOutputPort("result").value = result
         logger.debug("---")
 
-dgpy.registerNode("AddNode", AddNode)
+dgpy.registerNode(AddNode)
 
 
 class UsageCase(unittest.TestCase):

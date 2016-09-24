@@ -28,7 +28,8 @@ PUSH = 0
 PULL = 1
 
 
-def registerNode(nodeName, nodeType):
+def registerNode(nodeType):
+    nodeName = nodeType.__name__
     NODES[nodeName] = nodeType
 
 
@@ -209,6 +210,11 @@ class OutputPort(Port):
 
 
 class VoidNode(object):
+    """
+    Empty and most basic node type.
+    Every custom node is asumed to subclass, or at least replicate, this
+    interface.
+    """
     isDirty = property(fget=lambda x: x._isDirty,
                        fset=lambda x, value: x.setDirty(value))
 
@@ -235,6 +241,8 @@ class VoidNode(object):
         return self.name
 
     def serialize(self):
+        """Return a dict containing the serialized data (json/yaml/markup friendly).
+        """
         data = {
             "model": self.model,
             "inputPorts": dict(),
@@ -248,6 +256,8 @@ class VoidNode(object):
         return data
 
     def setDirty(self, value):
+        """Tag the node to be reevaluated the next time the graph pull its data.
+        """
         self._isDirty = value
         if not value:
             return
@@ -257,6 +267,7 @@ class VoidNode(object):
                     src.owner.isDirty = True
 
     def initPorts(self):
+        """Callback where ports should be added/registered."""
         pass
 
     def getInputPort(self, name):
@@ -266,17 +277,22 @@ class VoidNode(object):
         return self._outputPorts.get(name)
 
     def addInputPort(self, name):
+        """Add/register an input port to the node."""
         port = InputPort(name)
         port.owner = self
         self._inputPorts[name] = port
 
     def addOutputPort(self, name):
+        """Add/register an output port to the node."""
         port = OutputPort(name)
         port.owner = self
         self._outputPorts[name] = port
 
     def evaluate(self):
+        """Node computation should be implemented here.
+        Please extend this method in order to keep track of evaluation count.
+        """
         logger.debug("Evaluating {}".format(self.name))
         self.evalCount += 1
 
-registerNode("VoidNode", VoidNode)
+registerNode(VoidNode)
